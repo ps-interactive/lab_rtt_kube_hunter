@@ -1,0 +1,75 @@
+# +--------------------+
+# AUTH POLICIES
+# +--------------------+
+
+# Auth policies that allow psps to execute
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: psp:default
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: psp:default
+roleRef:
+  kind: ClusterRole
+  name: psp:default
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: Group
+  apiGroup: rbac.authorization.k8s.io
+  name: system:serviceaccounts
+---
+
+# +--------------------+
+# PSP (Pod Security Policy)
+# +--------------------+
+
+# Needs:
+# 1. Enable the Pod Security Policy feature
+# 2. Write a Pod Security Policy
+
+# The Pod Security Policy (PSP) below was generated via:
+# kubectl advise-psp inspect --namespace default
+
+# For more context on the PSPs, review: 
+# https://kubernetes.io/docs/concepts/policy/pod-security-policy
+
+# advise-psp outputs a Pod Security Policy that allows our CURRENT pods to execute
+# advise-psp gives use a baseline to start from
+
+# Note the allowedHostPaths and the hostPath volume 
+# This allowed the Apache Pod access to ALL files on the Kubernetes node
+# (This allowed the Pod access to the Kubernetes Node's registry credentials)
+
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: default
+spec:
+  allowedHostPaths:
+  - pathPrefix: /
+    readOnly: true
+  fsGroup:
+    rule: RunAsAny
+  hostPorts:
+  - max: 0
+    min: 0
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - hostPath
+  - secret
+
